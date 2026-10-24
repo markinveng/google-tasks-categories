@@ -64,11 +64,6 @@ export class GoogleTasksDOMAdapter {
     return area.querySelector<HTMLElement>(SEL.dateContainer);
   }
 
-  /** Own elements inside this row (excluding nested subtask rows). */
-  findOwn<T extends Element>(row: HTMLElement, selector: string): T | null {
-    return [...row.querySelectorAll<T>(selector)].find((el) => el.closest(SEL.row) === row) ?? null;
-  }
-
   applyCategoryColor(row: HTMLElement, color: string | null): void {
     if (color) {
       row.setAttribute(CATEGORY_ATTR, '');
@@ -96,9 +91,12 @@ export class GoogleTasksDOMAdapter {
 
   private collect(records: MutationRecord[]): void {
     for (const record of records) {
-      // Skip mutations caused only by our own elements to avoid feedback loops.
+      // Skip mutations caused only by our own elements to avoid feedback loops,
+      // except removals inside a task row: Google Tasks re-renders the date
+      // container (e.g. for tasks without a due date) and drops our button.
       const nodes = [...record.addedNodes, ...record.removedNodes];
-      if (nodes.length && nodes.every(isOwnNode)) continue;
+      const removedFromRow = record.removedNodes.length > 0 && record.target instanceof Element && !!this.getRowOf(record.target);
+      if (nodes.length && nodes.every(isOwnNode) && !removedFromRow) continue;
       if (record.target instanceof Element) this.pending.add(record.target);
       record.addedNodes.forEach((node) => node instanceof Element && this.pending.add(node));
     }

@@ -24,18 +24,25 @@ export default defineContentScript({
       },
     });
 
+    // Reusing the same button per row keeps an open dropdown anchored when
+    // Google Tasks removes the button and we put it back.
+    const buttons = new WeakMap<HTMLElement, HTMLButtonElement>();
+
     function renderRow(row: HTMLElement): void {
       const ref = adapter.getTaskRef(row);
       const category = ref ? service.getCategoryForTask(ref) : undefined;
       adapter.applyCategoryColor(row, category?.color ?? null);
 
       const container = ref ? adapter.getExpandedDateContainer(row) : null;
-      let button = adapter.findOwn<HTMLButtonElement>(row, `.${CATEGORY_BUTTON_CLASS}`);
+      let button = buttons.get(row);
       if (!container) {
         button?.remove();
         return;
       }
-      if (!button) button = createCategoryButton(openDropdown);
+      if (!button) {
+        button = createCategoryButton(openDropdown);
+        buttons.set(row, button);
+      }
       // Keep the button as the last item, right after the date/time control.
       if (container.lastElementChild !== button) container.append(button);
       updateCategoryButton(button, category);
