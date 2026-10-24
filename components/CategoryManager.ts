@@ -55,8 +55,8 @@ export class CategoryManager {
 
   open(): void {
     if (!this.dialog.isConnected) document.body.append(this.dialog);
-    this.render();
     if (!this.dialog.open) this.dialog.showModal();
+    this.render();
   }
 
   destroy(): void {
@@ -66,7 +66,7 @@ export class CategoryManager {
   }
 
   render(): void {
-    if (!this.dialog.open && this.dialog.isConnected) return;
+    if (!this.dialog.open) return;
     const categories = this.service.getCategories();
     if (!categories.length) {
       const empty = document.createElement('li');
