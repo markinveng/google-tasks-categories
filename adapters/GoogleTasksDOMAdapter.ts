@@ -11,7 +11,6 @@ const SEL = {
   // Only rendered while a task's edit area is expanded.
   repeatButton: '[jsname="gF1kvc"]',
   taskList: '[data-task-list-id]:not([data-task-list-id=""])',
-  headerAnchor: 'header[role="banner"] [jsname="cAuFpc"]',
 } as const;
 
 /** Every element this extension inserts carries this class. */
@@ -76,17 +75,6 @@ export class GoogleTasksDOMAdapter {
 
   clearAllColors(): void {
     document.querySelectorAll<HTMLElement>(`[${CATEGORY_ATTR}]`).forEach((row) => this.applyCategoryColor(row, null));
-  }
-
-  findHeaderAnchor(): Element | null {
-    return document.querySelector(SEL.headerAnchor);
-  }
-
-  isDarkTheme(): boolean {
-    const match = getComputedStyle(document.body).backgroundColor.match(/\d+(\.\d+)?/g);
-    if (!match || match.length < 3) return false;
-    const [r, g, b] = match.map(Number) as [number, number, number];
-    return 0.299 * r + 0.587 * g + 0.114 * b < 128;
   }
 
   private collect(records: MutationRecord[]): void {

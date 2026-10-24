@@ -4,22 +4,27 @@ import { CATEGORY_BUTTON_CLASS, createCategoryButton, updateCategoryButton } fro
 import { CategoryDropdown } from '@/components/CategoryDropdown';
 import { CategoryManager } from '@/components/CategoryManager';
 import { CategoryService } from '@/services/CategoryService';
+import { applyTheme, placeBeforeHeaderAnchor } from '@/utils/page';
 
 export default defineContentScript({
   matches: ['https://tasks.google.com/*'],
+  // Google Calendar (calendar.google.com/.../r/tasks) shows Tasks in a
+  // tasks.google.com/embed/ iframe; the calendar content script owns the header button there.
+  allFrames: true,
   async main(ctx) {
     const service = new CategoryService();
     await service.init();
     if (ctx.isInvalid) return;
 
+    const embedded = window !== window.top;
     const manager = new CategoryManager(service);
     const dropdown = new CategoryDropdown(service);
 
     const adapter = new GoogleTasksDOMAdapter({
       onRows: (rows) => rows.forEach(renderRow),
       onFlush: () => {
-        document.documentElement.dataset.gtcTheme = adapter.isDarkTheme() ? 'dark' : 'light';
-        placeHeaderButton();
+        applyTheme();
+        if (!embedded) placeHeaderButton();
         dropdown.refresh();
       },
     });
@@ -64,9 +69,7 @@ export default defineContentScript({
 
     function placeHeaderButton(): void {
       const button = manager.headerButton;
-      const anchor = adapter.findHeaderAnchor();
-      if (anchor) {
-        if (button.nextElementSibling !== anchor) anchor.before(button);
+      if (placeBeforeHeaderAnchor(button)) {
         button.classList.remove('gtc-header-btn--floating');
       } else if (!button.isConnected) {
         button.classList.add('gtc-header-btn--floating');
