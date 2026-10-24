@@ -99,7 +99,13 @@ export class CategoryService {
 
   private async persist(data: Parameters<typeof StorageService.save>[0]): Promise<void> {
     this.emit();
-    await StorageService.save(data);
+    try {
+      await StorageService.save(data);
+    } catch (e) {
+      // Roll the optimistic change back to what is actually stored.
+      await this.reload();
+      throw e;
+    }
   }
 
   private async reload(): Promise<void> {

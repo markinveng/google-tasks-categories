@@ -56,7 +56,7 @@ export default defineContentScript({
         anchor: button,
         currentId: service.getCategoryForTask(ref)?.id ?? null,
         onSelect: (categoryId) => {
-          void service.assign(ref, categoryId);
+          service.assign(ref, categoryId).catch((e) => console.error('[Google Tasks Categories]', e));
           button.focus();
         },
       });
